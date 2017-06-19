@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/relative_layout_bg"
+    android:layout_width="64dp"
+    android:layout_height="32dp"
+    android:background="@drawable/bg_switch_bottom_open">
+
+    <TextView
+        android:id="@+id/tv_month"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:layout_centerVertical="true"
+        android:layout_marginLeft="5dp"
+        android:layout_marginRight="5dp"
+        android:text="月"
+        android:textColor="#a1d80e"
+        android:textSize="16sp"
+        android:visibility="visible"/>
+
+    <View
+        android:id="@+id/view_scroll"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:layout_centerVertical="true"
+        android:layout_marginLeft="5dp"
+        android:layout_marginRight="5dp"
+        android:background="@drawable/bg_switch_top_open"/>
+
+</RelativeLayout>
