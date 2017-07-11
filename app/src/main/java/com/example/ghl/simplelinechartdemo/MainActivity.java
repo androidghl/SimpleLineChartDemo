@@ -31,6 +31,7 @@ public class MainActivity extends AppCompatActivity {
     private void loadData() {
         setData();
         mLineChart.setXItem(xItem);
+        mLineChart.setLevelLineNum(200);
         mLineChart.setData(data);
     }
 

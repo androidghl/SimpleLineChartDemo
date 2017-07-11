@@ -10,7 +10,6 @@ import android.graphics.PathEffect;
 import android.graphics.Point;
 import android.graphics.Typeface;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.View;
 
 import java.util.ArrayList;
@@ -30,26 +29,31 @@ public class SimpleLineChartView extends View {
     private Paint linePaint;
     private Paint p1;
     private Paint p2;
-    //X轴偏移量
-    int xOffset = 50;
+
     //View 的宽和高
     private int mWidth, mHeight;
+    //X轴偏移量
+    private static final int XOFFSET = 50;
     //Y轴字体的大小
-    private int mYAxisFontSize = 36;
+    private static final int YAXISFONTSIZE = 36;
+    //X轴坐标字体的大小
+    private static final int XAXISFONTSIZE = 36;
+    //点的半径
+    private static final float POINTRADIUS = 5;
+    //线条的宽度
+    private static final float STROKEWIDTH = 4.0f;
     //线的颜色
     private int mLineColor = Color.parseColor("#68cffa");
-    //线条的宽度
-    private float mStrokeWidth = 4.0f;
     //点的集合
     private List<String> mPointMap;
-    //点的半径
-    private float mPointRadius = 5;
     //X轴的文字
     private List<String> mXAxis = new ArrayList<>();
     //Y轴的文字
     private List<String> mYAxis = new ArrayList<>();
     //没有数据的时候的内容
     private String mNoDataMsg = "没有数据！";
+    //标准线数值
+    private int levelLineNum = 0;
 
     private List<Point> scorePoints = new ArrayList<>();
 
@@ -81,7 +85,7 @@ public class SimpleLineChartView extends View {
 
         //画坐标线的轴
         axisPaint = new Paint();
-        axisPaint.setTextSize(mYAxisFontSize);
+        axisPaint.setTextSize(YAXISFONTSIZE);
         axisPaint.setColor(Color.parseColor("#c7c7c8"));//坐标轴上文字的颜色
         axisPaint.setStrokeWidth(4);
 
@@ -95,19 +99,19 @@ public class SimpleLineChartView extends View {
         linePaint.setColor(mLineColor);
         linePaint.setAntiAlias(true);
         //设置线条宽度
-        linePaint.setStrokeWidth(mStrokeWidth);
+        linePaint.setStrokeWidth(STROKEWIDTH);
 
         //写X轴坐标
         p1 = new Paint();
-        p1.setTextSize(36);
+        p1.setTextSize(XAXISFONTSIZE);
         p1.setColor(Color.parseColor("#bdbdbd"));
         p1.setTypeface(Typeface.DEFAULT);
         p1.setAntiAlias(true);//防止边缘锯齿
         p1.setFilterBitmap(true);
 
-        //写字(500km)
+        //写字(levelLineNum的值)
         p2 = new Paint();
-        p2.setTextSize(36);
+        p2.setTextSize(XAXISFONTSIZE);
         p2.setColor(Color.parseColor("#bdbdbd"));
         p2.setTypeface(Typeface.DEFAULT);
         p2.setAntiAlias(true);//防止边缘锯齿
@@ -125,21 +129,12 @@ public class SimpleLineChartView extends View {
         }
 
         //计算x轴 刻度间距
-        int xInterval = (mWidth - xOffset) / (mXAxis.size());
-        //计算Y轴开始的原点坐标
-        int xItemX = (int) p1.measureText(mYAxis.get(1)) - 20;
+        int xInterval = (mWidth - XOFFSET * 2) / (mXAxis.size() - 1);
 
         //x轴的刻度集合
         int[] xPoints = new int[mXAxis.size()];
-        if (flag == 7) {
-            for (int i = 0; i < mXAxis.size(); i++) {
-                xPoints[i] = (int) (i * xInterval + xItemX + p1.measureText(mXAxis.get(i)) / 2 + xOffset + 10);
-            }
-
-        } else if (flag == 30) {
-            for (int i = 0; i < mXAxis.size(); i++) {
-                xPoints[i] = (int) (i * xInterval + xItemX + p1.measureText(mXAxis.get(i)) / 2 + xOffset + 10);
-            }
+        for (int i = 0; i < mXAxis.size(); i++) {
+            xPoints[i] = i * xInterval + XOFFSET;
         }
 
         scorePoints.clear();
@@ -151,13 +146,12 @@ public class SimpleLineChartView extends View {
             }
         }
         for (int i = 0; i < mPointMap.size(); i++) {
-
             Point point = new Point();
-            point.x = xPoints[i] - 5;
-            if (maxMileage > 500) {
-                point.y = (mHeight - mYAxisFontSize - 20 - mHeight / 10) * (maxMileage - YCoord(mPointMap.get(i))) / maxMileage + mHeight / 10;
+            point.x = xPoints[i];
+            if (maxMileage > levelLineNum) {
+                point.y = (mHeight - YAXISFONTSIZE - 20 - mHeight / 10) * (maxMileage - YCoord(mPointMap.get(i))) / maxMileage + mHeight / 10;
             } else {
-                point.y = (mHeight - mYAxisFontSize - 20 - mHeight / 10) * (500 - YCoord(mPointMap.get(i))) / 500 + mHeight / 10;
+                point.y = (mHeight - YAXISFONTSIZE - 20 - mHeight / 10) * (levelLineNum - YCoord(mPointMap.get(i))) / levelLineNum + mHeight / 10;
             }
             scorePoints.add(point);
         }
@@ -206,9 +200,8 @@ public class SimpleLineChartView extends View {
      * @param canvas
      */
     private void drawPoint(Canvas canvas) {
-        Log.e("ghl", "scorePoints.size()=" + scorePoints.size());
         for (int i = 0; i < scorePoints.size(); i++) {
-            canvas.drawCircle(scorePoints.get(i).x, scorePoints.get(i).y, mPointRadius, pointPaint);
+            canvas.drawCircle(scorePoints.get(i).x, scorePoints.get(i).y, POINTRADIUS, pointPaint);
         }
     }
 
@@ -218,8 +211,8 @@ public class SimpleLineChartView extends View {
      * @param canvas
      */
     private void drawAxisLine(Canvas canvas) {
-        canvas.drawLine(36, mHeight - mYAxisFontSize - 20, mWidth - 30, mHeight - mYAxisFontSize - 20,
-                axisPaint);//底部横线  mHeight - mYAxisFontSize-20为原点Y轴坐标
+        canvas.drawLine(36, mHeight - YAXISFONTSIZE - 20, mWidth - 30, mHeight - YAXISFONTSIZE - 20,
+                axisPaint);//底部横线  mHeight - YAXISFONTSIZE-20为原点Y轴坐标
     }
 
     /**
@@ -228,42 +221,36 @@ public class SimpleLineChartView extends View {
      * @param canvas
      */
     private void drawText(Canvas canvas) {
-        //计算x轴 刻度间距
-        int xInterval = (mWidth - xOffset) / (mXAxis.size());
-        //计算Y轴开始的原点坐标
-        int xItemX = (int) p1.measureText(mYAxis.get(1)) - 20;
 
         //画X轴坐标
         if (flag == 7) {
             for (int i = 0; i < mXAxis.size(); i++) {
-                canvas.drawText(mXAxis.get(i), i * (xInterval + 2) + xItemX + xOffset - 3,
-                        mHeight - mYAxisFontSize + 30 + 1, p1);
+                canvas.drawText(mXAxis.get(i), scorePoints.get(i).x - XAXISFONTSIZE / 3,
+                        mHeight - YAXISFONTSIZE + 30 + 1, p1);
             }
-
         } else if (flag == 30) {
-            for (int i = 0; i < mXAxis.size(); i++) {
-                canvas.drawText(mXAxis.get(29), 5 * (mWidth - 86 - p1.measureText(mXAxis
-                        .get(0))) / 5 + 60, mHeight - mYAxisFontSize + 30, p1);
-                canvas.drawText(mXAxis.get(23), 4 * (mWidth - 86 - p1.measureText(mXAxis
-                        .get(0))) / 5 + 50, mHeight - mYAxisFontSize + 30, p1);
-                canvas.drawText(mXAxis.get(17), 3 * (mWidth - 86 - p1.measureText(mXAxis
-                        .get(0))) / 5 + 30, mHeight - mYAxisFontSize + 30, p1);
-                canvas.drawText(mXAxis.get(11), 2 * (mWidth - 86 - p1.measureText(mXAxis
-                        .get(0))) / 5 + 25, mHeight - mYAxisFontSize + 30, p1);
-                canvas.drawText(mXAxis.get(5), 1 * (mWidth - 86 - p1.measureText(mXAxis
-                        .get(0))) / 5 + 25, mHeight - mYAxisFontSize + 30, p1);
-                canvas.drawText(mXAxis.get(0), 40, mHeight - mYAxisFontSize + 30, p1);
-            }
+                canvas.drawText(mXAxis.get(29), scorePoints.get(29).x - XAXISFONTSIZE / 3,
+                        mHeight - YAXISFONTSIZE + 30, p1);
+                canvas.drawText(mXAxis.get(23), scorePoints.get(23).x - XAXISFONTSIZE / 3,
+                        mHeight - YAXISFONTSIZE + 30, p1);
+                canvas.drawText(mXAxis.get(17), scorePoints.get(17).x - XAXISFONTSIZE / 3,
+                        mHeight - YAXISFONTSIZE + 30, p1);
+                canvas.drawText(mXAxis.get(11), scorePoints.get(11).x - XAXISFONTSIZE / 3,
+                        mHeight - YAXISFONTSIZE + 30, p1);
+                canvas.drawText(mXAxis.get(5), scorePoints.get(5).x - XAXISFONTSIZE / 3,
+                        mHeight - YAXISFONTSIZE + 30, p1);
+                canvas.drawText(mXAxis.get(0), scorePoints.get(0).x - XAXISFONTSIZE / 3,
+                        mHeight - YAXISFONTSIZE + 30, p1);
         }
 
-        //画500km文字
+        //画levelLineNum km文字
         int xuTextY;
-        if (maxMileage > 500) {
-            xuTextY = (mHeight - mYAxisFontSize - 20 - mHeight / 10) * (maxMileage - 500) / maxMileage + mHeight / 10 + (int) (p2.getTextSize() / 2);
+        if (maxMileage > levelLineNum) {
+            xuTextY = (mHeight - YAXISFONTSIZE - 20 - mHeight / 10) * (maxMileage - levelLineNum) / maxMileage + mHeight / 10 + (int) (p2.getTextSize() / 2);
         } else {
             xuTextY = mHeight / 10 + (int) (p2.getTextSize() / 2);
         }
-        canvas.drawText(500 + "km", mWidth - 120 + 12, xuTextY, p2);
+        canvas.drawText(levelLineNum + "km", mWidth - 120 + 12, xuTextY, p2);
 
     }
 
@@ -275,8 +262,8 @@ public class SimpleLineChartView extends View {
     private void drawDottedLine(Canvas canvas) {
         Path path = new Path();
         int xuY;
-        if (maxMileage > 500) {
-            xuY = (mHeight - mYAxisFontSize - 20 - mHeight / 10) * (maxMileage - 500) / maxMileage + mHeight / 10;
+        if (maxMileage > levelLineNum) {
+            xuY = (mHeight - YAXISFONTSIZE - 20 - mHeight / 10) * (maxMileage - levelLineNum) / maxMileage + mHeight / 10;
         } else {
             xuY = mHeight / 10;
         }
@@ -315,6 +302,15 @@ public class SimpleLineChartView extends View {
      */
     public void setXItem(List<String> xItem) {
         mXAxis = xItem;
+    }
+
+    /**
+     * 设置标准线数值
+     *
+     * @param levelLineNum
+     */
+    public void setLevelLineNum(int levelLineNum) {
+        this.levelLineNum = levelLineNum;
     }
 
 }
